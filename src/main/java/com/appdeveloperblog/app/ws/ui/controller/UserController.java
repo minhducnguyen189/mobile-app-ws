@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("users") //http://localhost:8080/users
+@RequestMapping("users") //http://localhost:8080/mobile-app-ws/users
 public class UserController {
 
     @Autowired
