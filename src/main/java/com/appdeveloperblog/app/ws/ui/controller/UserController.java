@@ -1,17 +1,21 @@
 package com.appdeveloperblog.app.ws.ui.controller;
 
 import com.appdeveloperblog.app.ws.exceptions.UserServiceException;
+import com.appdeveloperblog.app.ws.service.AddressService;
 import com.appdeveloperblog.app.ws.service.UserService;
+import com.appdeveloperblog.app.ws.shared.dto.AddressDTO;
 import com.appdeveloperblog.app.ws.shared.dto.UserDto;
 import com.appdeveloperblog.app.ws.ui.model.request.UserDetailRequestModel;
 import com.appdeveloperblog.app.ws.ui.model.response.*;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,6 +25,12 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private AddressService addressService;
+
+    @Autowired
+    private AddressService addressesService;
 
     @GetMapping(path = "/{id}",
     produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
@@ -36,7 +46,6 @@ public class UserController {
             produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE }
             )
     public UserRest createUser(@RequestBody UserDetailRequestModel userDetails) {
-        UserRest returnValue = new UserRest();
 
         if (userDetails.getFirstName().isEmpty())
             throw new NullPointerException("The required field is null");
@@ -48,7 +57,7 @@ public class UserController {
         UserDto userDto = modelMapper.map(userDetails, UserDto.class);
 
         UserDto createUser = userService.createUser(userDto);
-        BeanUtils.copyProperties(createUser, returnValue);
+        UserRest returnValue = modelMapper.map(createUser, UserRest.class);
         return returnValue;
     }
 
@@ -95,6 +104,26 @@ public class UserController {
             returnValue.add(userModel);
         }
         return returnValue;
+    }
+
+    @GetMapping(path = "/{id}/addresses",
+            produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public List<AddressesRest> getUserAddresses(@PathVariable String id) {
+        List<AddressesRest> returnValue = new ArrayList<>();
+        List<AddressDTO> addressesDTOS = addressesService.getAddresses(id);
+        if(addressesDTOS != null && !addressesDTOS.isEmpty()) {
+            Type listType = new TypeToken<List<AddressesRest>>() {}.getType();
+            returnValue = new ModelMapper().map(addressesDTOS, listType);
+        }
+        return returnValue;
+    }
+
+    @GetMapping(path = "/{id}/addresses/{addressId}",
+            produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public AddressesRest getUserAddress(@PathVariable String addressId) {
+        AddressDTO addressDTO = addressService.getAddress(addressId);
+        ModelMapper modelMapper = new ModelMapper();
+        return modelMapper.map(addressDTO, AddressesRest.class);
     }
 
 
